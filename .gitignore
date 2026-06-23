@@ -1,1 +1,3 @@
-FoodProjectApp/backend/config/config.env
+backend/config/config.env
+node_modules/
+.env
