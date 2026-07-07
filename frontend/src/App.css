@@ -205,6 +205,11 @@ nav {
   opacity: 0.9;
 }
 
+.ai-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .ai-insights-box {
   margin-top: 12px;
   padding: 10px;

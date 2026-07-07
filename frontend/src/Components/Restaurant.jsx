@@ -1,31 +1,47 @@
 import React, { useState,useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-
+import { deleteRestaurant, analyzeReviews } from "../redux/actions/restaurantAction";
 
 const Restaurant = ({ restaurant }) => {
-  const [showAI, setShowAI] = useState(false);
-
   const dispatch = useDispatch();
+  const [showAI, setShowAI] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
-  // const { isAuthenticated, user } = useSelector(
-  //   (state) => state.auth || {}
-  // );
+  const { isAuthenticated, user } = useSelector(
+    (state) => state.user || {}
+  );
 
-  // const handleDelete = () => {
-  //   if (!window.confirm("Delete this restaurant?")) return;
+  useEffect(() => {
+    // Set up any initial effects if needed
+  }, [restaurant]);
 
-  //   dispatch(deleteRestaurant(restaurant._id))
-  //     .unwrap()
-  //     .then(() => {
-  //       // optional: refetch (not needed since we updated state already)
-  //       // dispatch(getRestaurants());
-  //     })
-  //     .catch((err) => {
-  //       alert(err || "Unable to delete");
-  //     });
-  // };
+  const handleShowAI = async () => {
+    if (!showAI && !restaurant.reviewSentiment) {
+      // Trigger AI analysis if not done yet
+      setAnalyzing(true);
+      try {
+        await dispatch(analyzeReviews(restaurant._id));
+        setShowAI(true);
+      } catch (error) {
+        console.error("Analysis failed:", error);
+        alert("Failed to analyze reviews");
+      } finally {
+        setAnalyzing(false);
+      }
+    } else {
+      setShowAI(!showAI);
+    }
+  };
 
+  //DELETE
+  const handleDelete = () => {
+    if (!window.confirm("Delete this restaurant?")) return;
+
+    dispatch(deleteRestaurant(restaurant._id)).catch(() => {
+      alert("Unable to delete");
+    });
+  };
   return (
     <div className="col-12 my-3">
     <div className="card restaurant-card p-3">
@@ -61,22 +77,21 @@ const Restaurant = ({ restaurant }) => {
       </span>
     </div>
 
-    {restaurant.reviewSentiment && (
-  <>
-
-
-    <button
-      className="ai-btn"
-      onClick={() => setShowAI(!showAI)}
-    >
-      {showAI
-        ? "➖ Hide Summary"
-        : "💬 View Review Summary"}
-    </button>
-
-  
-  </>
-)}
+    {restaurant.numOfReviews > 0 && (
+      <>
+        <button
+          className="ai-btn"
+          onClick={handleShowAI}
+          disabled={analyzing}
+        >
+          {analyzing
+            ? "⏳ Analyzing..."
+            : showAI
+            ? "➖ Hide Summary"
+            : "💬 View Review Summary"}
+        </button>
+      </>
+    )}
 
   </div>
 
@@ -86,7 +101,7 @@ const Restaurant = ({ restaurant }) => {
       <div className="ai-status">
       Review Summary : 
           😊 <strong>
-            {restaurant.reviewSentiment}
+            {restaurant.reviewSentiment || "Analyzing..."}
           </strong>
        
         </div>
@@ -116,6 +131,15 @@ const Restaurant = ({ restaurant }) => {
     )}
 
 </div>
+
+ {isAuthenticated && user && user.role === "admin" && (
+            <button
+              className="btn btn-danger btn-sm mt-2"
+              onClick={handleDelete}
+            >
+              Delete
+            </button>
+          )}
     </div>
   );
 };
